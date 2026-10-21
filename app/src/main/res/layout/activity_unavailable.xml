@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/unavailableRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/page_padding">
+
+    <TextView
+        android:id="@+id/unavailableBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="start"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/back"
+        android:focusable="true"
+        android:gravity="center"
+        android:text="‹"
+        android:textColor="@color/primary_blue"
+        android:textSize="36sp" />
+
+    <TextView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:background="@drawable/bg_icon_tile"
+        android:gravity="center"
+        android:text="⌛"
+        android:textSize="36sp" />
+
+    <TextView
+        android:id="@+id/unavailableModuleName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:gravity="center"
+        android:textColor="@color/text_primary"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_small"
+        android:gravity="center"
+        android:text="@string/module_unavailable_description"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/unavailableHome"
+        android:layout_width="wrap_content"
+        android:layout_height="52dp"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:backgroundTint="@color/primary_blue"
+        android:minWidth="160dp"
+        android:text="@string/back_to_dashboard"
+        android:textColor="@color/button_text" />
+</LinearLayout>

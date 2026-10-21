@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="navy">#102A43</color>
+    <color name="primary_blue">#2563EB</color>
+    <color name="screen_background">#F3F6FB</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text_primary">#15263B</color>
+    <color name="text_secondary">#607286</color>
+    <color name="card_outline">#DFE7F1</color>
+    <color name="icon_background">#E8EFFF</color>
+    <color name="welcome_start">#102A43</color>
+    <color name="welcome_end">#1D4ED8</color>
+    <color name="welcome_accent">#BFD7FF</color>
+    <color name="welcome_text">#FFFFFF</color>
+    <color name="welcome_subtext">#D9E7FA</color>
+    <color name="button_text">#FFFFFF</color>
+    <color name="secondary_button">#E5ECF5</color>
+    <color name="calculator_operator">#E8EFFF</color>
+    <color name="calculator_operator_text">#1D4ED8</color>
+    <color name="error_text">#B42318</color>
+    <color name="logic_output_set">#D1FAE5</color>
+    <color name="logic_output_clear">#E8EFFF</color>
+</resources>
