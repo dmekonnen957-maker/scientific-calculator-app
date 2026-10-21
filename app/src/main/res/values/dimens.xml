@@ -7,4 +7,7 @@
     <dimen name="spacing_medium">12dp</dimen>
     <dimen name="spacing_large">20dp</dimen>
     <dimen name="calculator_key_height">52dp</dimen>
+    <dimen name="toolkit_table_row_height">52dp</dimen>
+    <dimen name="toolkit_compact_row_height">64dp</dimen>
+    <dimen name="toolkit_action_height">40dp</dimen>
 </resources>

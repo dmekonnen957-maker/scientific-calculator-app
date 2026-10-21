@@ -28,7 +28,7 @@ import com.example.cscalc.utils.ThemeManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiBaseCalculatorActivity extends AppCompatActivity {
+public class MultiBaseCalculatorActivity extends ToolkitActivity {
     private static final String[] DIGITS = {
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"
     };
@@ -113,6 +113,27 @@ public class MultiBaseCalculatorActivity extends AppCompatActivity {
         findViewById(R.id.clearExpressionButton).setOnClickListener(view -> clearExpression());
         findViewById(R.id.backspaceExpressionButton).setOnClickListener(view -> backspace());
         copyButton.setOnClickListener(view -> copyResult());
+        handleReuseIntent();
+    }
+
+    private void handleReuseIntent() {
+        if (getIntent() != null && getIntent().hasExtra("REUSE_EXPRESSION")) {
+            String expr = getIntent().getStringExtra("REUSE_EXPRESSION");
+            String base = getIntent().getStringExtra("REUSE_BASE");
+            if (base != null) {
+                for (int i = 0; i < NumberBase.values().length; i++) {
+                    if (NumberBase.values()[i].getShortName().equalsIgnoreCase(base) ||
+                            NumberBase.values()[i].name().equalsIgnoreCase(base)) {
+                        baseSpinner.setSelection(i);
+                        break;
+                    }
+                }
+            }
+            if (expr != null && !expr.isEmpty()) {
+                expressionInput.setText(expr);
+                calculate();
+            }
+        }
     }
 
     private void buildKeypad() {
@@ -184,11 +205,13 @@ public class MultiBaseCalculatorActivity extends AppCompatActivity {
             explanationView.setText(lastCalculation.getExplanation());
             errorView.setVisibility(View.GONE);
             copyButton.setEnabled(true);
-            copyButton.setAlpha(1f);
-            CalculationHistory.add(this, "CALC " + currentBase.getShortName() + ": "
-                    + lastCalculation.getExpression() + " = "
-                    + lastCalculation.getResultInBase() + " (DEC "
-                    + lastCalculation.getDecimalResult() + ")");
+            CalculationHistory.record(this,
+                    com.example.cscalc.history.HistoryRepository.MODULE_CALCULATOR,
+                    "Expression Evaluation",
+                    lastCalculation.getExpression(),
+                    lastCalculation.getResultInBase() + " (DEC " + lastCalculation.getDecimalResult() + ")",
+                    "Base: " + currentBase.getShortName(),
+                    lastCalculation.getExplanation());
         } catch (MultiBaseCalculator.ExpressionException exception) {
             resetResult();
             errorView.setText(exception.getMessage());

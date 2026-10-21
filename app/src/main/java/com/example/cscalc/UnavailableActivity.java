@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.cscalc.utils.SystemBarInsets;
 import com.example.cscalc.utils.ThemeManager;
 
-public class UnavailableActivity extends AppCompatActivity {
+public class UnavailableActivity extends ToolkitActivity {
     public static final String EXTRA_MODULE_NAME = "module_name";
 
     @Override

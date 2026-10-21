@@ -19,7 +19,7 @@ import com.example.cscalc.utils.ThemeManager;
 
 import java.util.List;
 
-public class LogicGatesActivity extends AppCompatActivity {
+public class LogicGatesActivity extends ToolkitActivity {
     private Spinner gateSpinner;
     private SwitchCompat inputA;
     private SwitchCompat inputB;
@@ -73,6 +73,28 @@ public class LogicGatesActivity extends AppCompatActivity {
         findViewById(R.id.logicBack).setOnClickListener(view -> finish());
         findViewById(R.id.logicReset).setOnClickListener(view -> resetInputs());
         findViewById(R.id.logicSaveCalculation).setOnClickListener(view -> saveCalculation());
+        handleReuseIntent();
+    }
+
+    private void handleReuseIntent() {
+        if (getIntent() != null && getIntent().hasExtra("REUSE_GATE")) {
+            String gateName = getIntent().getStringExtra("REUSE_GATE");
+            if (gateName != null) {
+                for (int i = 0; i < LogicGateCalculator.Gate.values().length; i++) {
+                    if (LogicGateCalculator.Gate.values()[i].getLabel().equalsIgnoreCase(gateName) ||
+                            LogicGateCalculator.Gate.values()[i].name().equalsIgnoreCase(gateName)) {
+                        gateSpinner.setSelection(i);
+                        break;
+                    }
+                }
+            }
+            String inputs = getIntent().getStringExtra("REUSE_INPUTS");
+            if (inputs != null) {
+                inputA.setChecked(inputs.contains("A=1"));
+                inputB.setChecked(inputs.contains("B=1"));
+            }
+            updateLiveOutput();
+        }
     }
 
     private void updateGate() {
@@ -153,13 +175,15 @@ public class LogicGatesActivity extends AppCompatActivity {
         boolean a = inputA.isChecked();
         boolean b = inputB.isChecked();
         boolean result = LogicGateCalculator.evaluate(selectedGate, a, b);
-        String entry = "GATE " + selectedGate.getLabel() + ": A="
-                + LogicGateCalculator.bit(a);
-        if (selectedGate.getInputCount() == 2) {
-            entry += ", B=" + LogicGateCalculator.bit(b);
-        }
-        entry += " → Y=" + LogicGateCalculator.bit(result);
-        CalculationHistory.add(this, entry);
+        String inputStr = "A=" + LogicGateCalculator.bit(a) + (selectedGate.getInputCount() == 2 ? ", B=" + LogicGateCalculator.bit(b) : "");
+        String resultStr = "Y=" + LogicGateCalculator.bit(result);
+        CalculationHistory.record(this,
+                com.example.cscalc.history.HistoryRepository.MODULE_LOGIC,
+                selectedGate.getLabel(),
+                inputStr,
+                resultStr,
+                "Gate: " + selectedGate.getLabel() + " (" + selectedGate.getInputCount() + " input)",
+                selectedGate.getExpression());
         Toast.makeText(this, R.string.gate_saved, Toast.LENGTH_SHORT).show();
     }
 }

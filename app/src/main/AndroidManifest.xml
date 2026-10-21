@@ -15,12 +15,16 @@
             </intent-filter>
         </activity>
         <activity android:name=".NumberConverterActivity" android:exported="false" />
+        <activity android:name=".FlagRegisterActivity" android:exported="false" />
         <activity android:name=".MultiBaseCalculatorActivity" android:exported="false" />
         <activity android:name=".LogicGatesActivity" android:exported="false" />
         <activity android:name=".BooleanAlgebraActivity" android:exported="false" />
         <activity android:name=".HistoryActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".UnavailableActivity" android:exported="false" />
+        <activity android:name=".BinaryArithmeticActivity" android:exported="false" />
+        <activity android:name=".BitwiseOperationsActivity" android:exported="false" />
+        <activity android:name=".MemoryUnitsActivity" android:exported="false" />
     </application>
 
 </manifest>

@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BooleanAlgebraActivity extends AppCompatActivity {
+public class BooleanAlgebraActivity extends ToolkitActivity {
     private EditText expressionInput;
     private LinearLayout assignmentsContainer;
     private LinearLayout truthTableContainer;
@@ -87,6 +87,17 @@ public class BooleanAlgebraActivity extends AppCompatActivity {
                 prepareExpression();
             }
         });
+        handleReuseIntent();
+    }
+
+    private void handleReuseIntent() {
+        if (getIntent() != null && getIntent().hasExtra("REUSE_EXPRESSION")) {
+            String expr = getIntent().getStringExtra("REUSE_EXPRESSION");
+            if (expr != null && !expr.isEmpty()) {
+                expressionInput.setText(expr);
+                prepareExpression();
+            }
+        }
     }
 
     private boolean prepareExpression() {
@@ -156,7 +167,13 @@ public class BooleanAlgebraActivity extends AppCompatActivity {
                 record.append(variable).append('=').append(assignment.get(variable) ? '1' : '0');
             }
             record.append("] = ").append(output ? '1' : '0');
-            CalculationHistory.add(this, record.toString());
+            CalculationHistory.record(this,
+                    com.example.cscalc.history.HistoryRepository.MODULE_BOOLEAN,
+                    "Evaluate Expression",
+                    parsedExpression.getExpression(),
+                    output ? "1" : "0",
+                    "Assignments: " + assignment.toString(),
+                    record.toString());
             errorView.setVisibility(View.GONE);
             Toast.makeText(this, R.string.boolean_evaluation_saved, Toast.LENGTH_SHORT).show();
         } catch (BooleanExpression.BooleanExpressionException exception) {
@@ -205,8 +222,13 @@ public class BooleanAlgebraActivity extends AppCompatActivity {
                     0, getResources().getDimensionPixelSize(R.dimen.spacing_xsmall));
             simplificationExplanations.addView(item);
         }
-        CalculationHistory.add(this, "BOOLEAN SIMPLIFY: "
-                + parsedExpression.getExpression() + " ≡ " + simplification.getExpression());
+        CalculationHistory.record(this,
+                com.example.cscalc.history.HistoryRepository.MODULE_BOOLEAN,
+                "Simplify Expression",
+                parsedExpression.getExpression(),
+                simplification.getExpression(),
+                "Equivalent SOP",
+                "Equivalent SOP: " + simplification.getExpression());
     }
 
     private Map<String, Boolean> currentAssignment() {

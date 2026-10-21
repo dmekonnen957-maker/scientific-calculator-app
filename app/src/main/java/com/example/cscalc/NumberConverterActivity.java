@@ -21,7 +21,7 @@ import com.example.cscalc.utils.InputValidator;
 import com.example.cscalc.utils.SystemBarInsets;
 import com.example.cscalc.utils.ThemeManager;
 
-public class NumberConverterActivity extends AppCompatActivity {
+public class NumberConverterActivity extends ToolkitActivity {
     private EditText input;
     private Spinner baseSpinner;
     private TextView binaryResult;
@@ -91,6 +91,28 @@ public class NumberConverterActivity extends AppCompatActivity {
             useButton.setOnClickListener(view -> useResultAsSource(rowIndex));
             setResultActionsEnabled(rowIndex, false);
         }
+
+        handleReuseIntent();
+    }
+
+    private void handleReuseIntent() {
+        if (getIntent() != null && getIntent().hasExtra("REUSE_INPUT")) {
+            String reuseInput = getIntent().getStringExtra("REUSE_INPUT");
+            String reuseBase = getIntent().getStringExtra("REUSE_BASE");
+            if (reuseInput != null && !reuseInput.isEmpty()) {
+                input.setText(reuseInput);
+                if (reuseBase != null) {
+                    for (int i = 0; i < NumberBase.values().length; i++) {
+                        if (NumberBase.values()[i].getShortName().equalsIgnoreCase(reuseBase) ||
+                                NumberBase.values()[i].name().equalsIgnoreCase(reuseBase)) {
+                            baseSpinner.setSelection(i);
+                            break;
+                        }
+                    }
+                }
+                convert(false);
+            }
+        }
     }
 
     private void convert(boolean saveHistory) {
@@ -111,9 +133,15 @@ public class NumberConverterActivity extends AppCompatActivity {
             }
             explanation.setText(BaseConverter.explain(text, source));
             if (saveHistory) {
-                CalculationHistory.add(this, text + " " + source.getShortName()
-                        + "  →  BIN " + results[0] + "  |  OCT " + results[1]
-                        + "  |  DEC " + results[2] + "  |  HEX " + results[3]);
+                String fullResult = "BIN " + results[0] + "  |  OCT " + results[1]
+                        + "  |  DEC " + results[2] + "  |  HEX " + results[3];
+                CalculationHistory.record(this,
+                        com.example.cscalc.history.HistoryRepository.MODULE_CONVERTER,
+                        "Base Conversion",
+                        text,
+                        fullResult,
+                        "Source: " + source.getShortName(),
+                        BaseConverter.explain(text, source));
             }
             input.setError(null);
             View focused = getCurrentFocus();
