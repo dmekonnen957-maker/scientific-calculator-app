@@ -68,6 +68,7 @@ public class FlagRegisterActivity extends ToolkitActivity {
         findViewById(R.id.calculateFlagsButton).setOnClickListener(view -> calculate());
         findViewById(R.id.clearFlagsButton).setOnClickListener(view -> clear());
         findViewById(R.id.sampleFlagsButton).setOnClickListener(view -> loadSample());
+        handleReuseIntent();
     }
 
     private void setAdapter(Spinner spinner, String[] values) {
@@ -83,6 +84,46 @@ public class FlagRegisterActivity extends ToolkitActivity {
                 ? new String[]{"8-bit"} : new String[]{"8-bit", "16-bit"};
         setAdapter(widthSpinner, widths);
         widthSpinner.setSelection(Math.min(oldSelection, widths.length - 1));
+    }
+
+    private void handleReuseIntent() {
+        if (getIntent() == null || !getIntent().hasExtra("REUSE_A")
+                || !getIntent().hasExtra("REUSE_B")) {
+            return;
+        }
+        String processorName = getIntent().getStringExtra("REUSE_PROCESSOR");
+        for (int index = 0; index < FlagRegisterCalculator.Processor.values().length; index++) {
+            FlagRegisterCalculator.Processor processor =
+                    FlagRegisterCalculator.Processor.values()[index];
+            if (processor.getLabel().equalsIgnoreCase(processorName)
+                    || processor.name().equalsIgnoreCase(processorName)) {
+                processorSpinner.setSelection(index);
+                configureWidthSpinner(index);
+                break;
+            }
+        }
+
+        if ("16".equals(getIntent().getStringExtra("REUSE_WIDTH"))) {
+            widthSpinner.setSelection(1);
+        } else {
+            widthSpinner.setSelection(0);
+        }
+
+        String operationName = getIntent().getStringExtra("REUSE_OP");
+        if (operationName != null) {
+            for (int index = 0; index < FlagRegisterCalculator.Operation.values().length; index++) {
+                FlagRegisterCalculator.Operation operation =
+                        FlagRegisterCalculator.Operation.values()[index];
+                if (operation.getLabel().equalsIgnoreCase(operationName)
+                        || operation.name().equalsIgnoreCase(operationName)) {
+                    operationSpinner.setSelection(index);
+                    break;
+                }
+            }
+        }
+        operandAInput.setText(getIntent().getStringExtra("REUSE_A"));
+        operandBInput.setText(getIntent().getStringExtra("REUSE_B"));
+        calculate();
     }
 
     private void calculate() {

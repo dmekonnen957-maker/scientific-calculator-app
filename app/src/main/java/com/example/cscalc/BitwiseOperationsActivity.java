@@ -230,16 +230,48 @@ public class BitwiseOperationsActivity extends ToolkitActivity {
                 if (opB != null) operandBInput.setText(opB);
                 calculate();
             } else if (inputA != null) {
-                String[] parts = inputA.split("[&|^~<<>>>>>\\s]+");
-                if (parts.length >= 1 && !parts[0].trim().isEmpty()) {
-                    operandAInput.setText(parts[0].trim());
-                    if (parts.length >= 2 && !parts[1].trim().isEmpty()) {
-                        operandBInput.setText(parts[1].trim());
+                BitwiseOps.Operation selectedOperation = findOperation(op);
+                if (selectedOperation == null) {
+                    selectedOperation = BitwiseOps.Operation.values()[
+                            opSpinner.getSelectedItemPosition()];
+                }
+                if (selectedOperation.isUnary()) {
+                    String operand = inputA.trim();
+                    if (operand.startsWith(selectedOperation.getSymbol())) {
+                        operand = operand.substring(selectedOperation.getSymbol().length()).trim();
                     }
-                    calculate();
+                    if (!operand.isEmpty()) {
+                        operandAInput.setText(operand);
+                        calculate();
+                    }
+                } else {
+                    int operatorIndex = inputA.indexOf(selectedOperation.getSymbol());
+                    if (operatorIndex > 0) {
+                        String operandA = inputA.substring(0, operatorIndex).trim();
+                        String operandB = inputA.substring(operatorIndex
+                                + selectedOperation.getSymbol().length()).trim();
+                        if (!operandA.isEmpty() && !operandB.isEmpty()) {
+                            operandAInput.setText(operandA);
+                            operandBInput.setText(operandB);
+                            calculate();
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private BitwiseOps.Operation findOperation(String operationName) {
+        if (operationName == null) {
+            return null;
+        }
+        for (BitwiseOps.Operation operation : BitwiseOps.Operation.values()) {
+            if (operation.getDisplayName().equalsIgnoreCase(operationName)
+                    || operation.getSymbol().equalsIgnoreCase(operationName)) {
+                return operation;
+            }
+        }
+        return null;
     }
 
     private BitwiseOps.BitWidth getSelectedWidth() {
@@ -267,8 +299,14 @@ public class BitwiseOperationsActivity extends ToolkitActivity {
                 operandBPreview.setText("BIN: —  |  HEX: —");
             } else {
                 try {
-                    long valB = BitwiseOps.parseInput(textB, width, 10);
-                    operandBPreview.setText("BIN: " + BitwiseOps.formatBinary(valB, width) + "  |  HEX: " + BitwiseOps.formatHex(valB, width));
+                    boolean shift = op == BitwiseOps.Operation.LEFT_SHIFT
+                            || op == BitwiseOps.Operation.RIGHT_SHIFT_LOGICAL
+                            || op == BitwiseOps.Operation.RIGHT_SHIFT_ARITHMETIC;
+                    long valB = shift ? BitwiseOps.parseShiftAmount(textB, 10)
+                            : BitwiseOps.parseInput(textB, width, 10);
+                    operandBPreview.setText(shift ? "Shift: " + valB + " bits"
+                            : "BIN: " + BitwiseOps.formatBinary(valB, width) + "  |  HEX: "
+                                    + BitwiseOps.formatHex(valB, width));
                 } catch (Exception e) {
                     operandBPreview.setText("BIN: (Invalid)  |  HEX: (Invalid)");
                 }
@@ -303,7 +341,11 @@ public class BitwiseOperationsActivity extends ToolkitActivity {
                 return;
             }
             try {
-                valB = BitwiseOps.parseInput(textB, width, 10);
+                boolean shift = op == BitwiseOps.Operation.LEFT_SHIFT
+                        || op == BitwiseOps.Operation.RIGHT_SHIFT_LOGICAL
+                        || op == BitwiseOps.Operation.RIGHT_SHIFT_ARITHMETIC;
+                valB = shift ? BitwiseOps.parseShiftAmount(textB, 10)
+                        : BitwiseOps.parseInput(textB, width, 10);
             } catch (IllegalArgumentException e) {
                 showError("Invalid format for Operand B: " + e.getMessage());
                 return;
@@ -342,12 +384,18 @@ public class BitwiseOperationsActivity extends ToolkitActivity {
 
     private void saveToHistory(boolean showToast) {
         if (lastResult == null) return;
+        String operandB = lastResult.getHexB();
+        if (lastResult.getOperation() == BitwiseOps.Operation.LEFT_SHIFT
+                || lastResult.getOperation() == BitwiseOps.Operation.RIGHT_SHIFT_LOGICAL
+                || lastResult.getOperation() == BitwiseOps.Operation.RIGHT_SHIFT_ARITHMETIC) {
+            operandB = String.valueOf(lastResult.getOperandB());
+        }
         StringBuilder sb = new StringBuilder("BITWISE [");
         sb.append(lastResult.getBitWidth().getBits()).append("-bit] ");
         sb.append(lastResult.getHexA()).append(" ");
         sb.append(lastResult.getOperation().getSymbol()).append(" ");
-        if (lastResult.getHexB() != null) {
-            sb.append(lastResult.getHexB()).append(" ");
+        if (operandB != null) {
+            sb.append(operandB).append(" ");
         }
         sb.append("= ").append(lastResult.getHexResult());
         sb.append(" (BIN: ").append(lastResult.getBinaryResult()).append(")");
@@ -355,7 +403,7 @@ public class BitwiseOperationsActivity extends ToolkitActivity {
         CalculationHistory.record(this,
                 com.example.cscalc.history.HistoryRepository.MODULE_BITWISE,
                 lastResult.getOperation().getDisplayName(),
-                (lastResult.getOperation().isUnary() ? "~" + lastResult.getHexA() : lastResult.getHexA() + " " + lastResult.getOperation().getSymbol() + " " + (lastResult.getHexB() != null ? lastResult.getHexB() : "")),
+                (lastResult.getOperation().isUnary() ? "~" + lastResult.getHexA() : lastResult.getHexA() + " " + lastResult.getOperation().getSymbol() + " " + (operandB != null ? operandB : "")),
                 lastResult.getHexResult() + " (BIN: " + lastResult.getBinaryResult() + ")",
                 lastResult.getBitWidth().getLabel(),
                 lastResult.getBitGridComparison() + "\n" + lastResult.getMaskingExplanation());

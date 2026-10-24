@@ -96,6 +96,44 @@ public class BitwiseOpsTest {
     }
 
     @Test
+    public void shiftsAtOrBeyondWidthDoNotWrapLikeJavaShiftCounts() {
+        BitwiseOps.Result left = BitwiseOps.calculate(
+                BitwiseOps.Operation.LEFT_SHIFT, BitwiseOps.BitWidth.WIDTH_8, 0x01L, 64L);
+        BitwiseOps.Result logical = BitwiseOps.calculate(
+                BitwiseOps.Operation.RIGHT_SHIFT_LOGICAL, BitwiseOps.BitWidth.WIDTH_8,
+                0x80L, 8L);
+        BitwiseOps.Result arithmeticNegative = BitwiseOps.calculate(
+                BitwiseOps.Operation.RIGHT_SHIFT_ARITHMETIC, BitwiseOps.BitWidth.WIDTH_8,
+                0x80L, 8L);
+        BitwiseOps.Result arithmeticPositive = BitwiseOps.calculate(
+                BitwiseOps.Operation.RIGHT_SHIFT_ARITHMETIC, BitwiseOps.BitWidth.WIDTH_8,
+                0x7FL, 8L);
+
+        assertEquals(0L, left.getResultValue());
+        assertEquals(64L, (long) left.getOperandB());
+        assertEquals(0L, logical.getResultValue());
+        assertEquals(0xFFL, arithmeticNegative.getResultValue());
+        assertEquals(0L, arithmeticPositive.getResultValue());
+    }
+
+    @Test
+    public void shiftAmountsAreParsedWithoutWidthMaskingAndMustBeNonNegative() {
+        assertEquals(64L, BitwiseOps.parseShiftAmount("64", 10));
+        assertEquals(16L, BitwiseOps.parseShiftAmount("0x10", 10));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void negativeShiftAmountsAreRejected() {
+        BitwiseOps.parseShiftAmount("-1", 10);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void calculationRejectsNegativeShiftAmounts() {
+        BitwiseOps.calculate(BitwiseOps.Operation.LEFT_SHIFT,
+                BitwiseOps.BitWidth.WIDTH_8, 1L, -1L);
+    }
+
+    @Test
     public void signednessInterpretation() {
         // 8-bit: 0xFF is unsigned 255, signed -1
         assertEquals(-1L, BitwiseOps.toSigned(0xFFL, BitwiseOps.BitWidth.WIDTH_8));

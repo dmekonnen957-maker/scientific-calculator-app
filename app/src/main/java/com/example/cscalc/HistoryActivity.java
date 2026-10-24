@@ -220,6 +220,21 @@ public class HistoryActivity extends ToolkitActivity {
             intent = new Intent(this, MultiBaseCalculatorActivity.class);
             intent.putExtra("REUSE_EXPRESSION", record.getInputExpression());
             intent.putExtra("REUSE_BASE", record.getConfiguration().replace("Base: ", "").trim());
+        } else if (HistoryRepository.MODULE_FLAGS.equals(module)) {
+            String[] operands = record.getInputExpression().trim().split("\\s+");
+            if (operands.length != 3) {
+                Toast.makeText(this, "This flag-register record cannot be reused.",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String[] configuration = record.getConfiguration().split(",", 2);
+            intent = new Intent(this, FlagRegisterActivity.class);
+            intent.putExtra("REUSE_PROCESSOR", configuration[0].trim());
+            intent.putExtra("REUSE_WIDTH",
+                    record.getConfiguration().contains("16-bit") ? "16" : "8");
+            intent.putExtra("REUSE_OP", record.getOperation());
+            intent.putExtra("REUSE_A", operands[0]);
+            intent.putExtra("REUSE_B", operands[2]);
         } else if (HistoryRepository.MODULE_LOGIC.equals(module)) {
             intent = new Intent(this, LogicGatesActivity.class);
             intent.putExtra("REUSE_GATE", record.getOperation());

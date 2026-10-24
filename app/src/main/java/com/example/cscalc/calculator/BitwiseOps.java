@@ -214,6 +214,21 @@ public final class BitwiseOps {
      * Parse an input string in decimal, hex (0x prefix or containing A-F), or binary (0b prefix or 0/1 only if requested).
      */
     public static long parseInput(String input, BitWidth width, int defaultRadix) {
+        if (width == null) {
+            throw new IllegalArgumentException("Bit width is required");
+        }
+        return parseValue(input, defaultRadix) & width.getMask();
+    }
+
+    public static long parseShiftAmount(String input, int defaultRadix) {
+        long value = parseValue(input, defaultRadix);
+        if (value < 0) {
+            throw new IllegalArgumentException("Shift amount cannot be negative");
+        }
+        return value;
+    }
+
+    private static long parseValue(String input, int defaultRadix) {
         if (input == null || input.trim().isEmpty()) {
             throw new IllegalArgumentException("Input cannot be empty");
         }
@@ -234,10 +249,19 @@ public final class BitwiseOps {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid number format for input: \"" + input + "\"");
         }
-        return val & width.getMask();
+        return val;
     }
 
     public static Result calculate(Operation operation, BitWidth width, long valA, Long valB) {
+        if (operation == null || width == null) {
+            throw new IllegalArgumentException("Operation and bit width are required");
+        }
+        boolean shiftOperation = operation == Operation.LEFT_SHIFT
+                || operation == Operation.RIGHT_SHIFT_LOGICAL
+                || operation == Operation.RIGHT_SHIFT_ARITHMETIC;
+        if (shiftOperation && valB != null && valB < 0) {
+            throw new IllegalArgumentException("Shift amount cannot be negative");
+        }
         long a = valA & width.getMask();
         Long b = (valB != null) ? (valB & width.getMask()) : null;
         long res;
@@ -270,34 +294,35 @@ public final class BitwiseOps {
                 break;
             case LEFT_SHIFT: {
                 if (b == null) throw new IllegalArgumentException("Shift amount is required for Left Shift");
-                int shiftAmount = (int) (valB & 0x7F); // practical shift amount
-                res = (a << shiftAmount) & width.getMask();
-                stepList.add(String.format("Left Shift (A << %d): Shifts bits left by %d positions. Vacated lower bits are filled with 0s.", shiftAmount, shiftAmount));
+                int shiftAmount = (int) Math.min(valB, width.getBits());
+                res = shiftAmount >= width.getBits() ? 0 : (a << shiftAmount) & width.getMask();
+                stepList.add(String.format("Left Shift (A << %d): Shifts bits left by %d positions. Vacated lower bits are filled with 0s.", valB, valB));
                 stepList.add(String.format("Bits pushed past bit position %d are discarded by the %d-bit fixed-width mask.", width.getBits() - 1, width.getBits()));
                 stepList.add(String.format("Multiplying effect: Each left shift by 1 position doubles the value (mod 2^%d).", width.getBits()));
                 break;
             }
             case RIGHT_SHIFT_LOGICAL: {
                 if (b == null) throw new IllegalArgumentException("Shift amount is required for Logical Right Shift");
-                int shiftAmount = (int) (valB & 0x7F);
-                res = (a >>> shiftAmount) & width.getMask();
-                stepList.add(String.format("Logical Right Shift (A >>> %d): Shifts bits right by %d positions. Vacated upper bit positions are always filled with 0s (zero fill).", shiftAmount, shiftAmount));
+                int shiftAmount = (int) Math.min(valB, width.getBits());
+                res = shiftAmount >= width.getBits()
+                        ? 0 : (a >>> shiftAmount) & width.getMask();
+                stepList.add(String.format("Logical Right Shift (A >>> %d): Shifts bits right by %d positions. Vacated upper bit positions are always filled with 0s (zero fill).", valB, valB));
                 stepList.add("Logical right shift treats the operand as an UNSIGNED bit pattern.");
                 break;
             }
             case RIGHT_SHIFT_ARITHMETIC: {
                 if (b == null) throw new IllegalArgumentException("Shift amount is required for Arithmetic Right Shift");
-                int shiftAmount = (int) (valB & 0x7F);
+                int shiftAmount = (int) Math.min(valB, width.getBits());
                 boolean msbSet = (a & width.getSignBitMask()) != 0;
                 if (msbSet) {
-                    long signedA = a - (1L << width.getBits());
+                    long signedA = toSigned(a, width);
                     long shifted = signedA >> shiftAmount;
                     res = shifted & width.getMask();
-                    stepList.add(String.format("Arithmetic Right Shift (A >> %d): MSB is 1 (negative in two's complement).", shiftAmount));
+                    stepList.add(String.format("Arithmetic Right Shift (A >> %d): MSB is 1 (negative in two's complement).", valB));
                     stepList.add(String.format("Sign extension: The sign bit (1) is replicated into the top %d vacated positions, preserving the negative sign.", shiftAmount));
                 } else {
                     res = (a >> shiftAmount) & width.getMask();
-                    stepList.add(String.format("Arithmetic Right Shift (A >> %d): MSB is 0 (positive). Zeroes fill the vacated top positions.", shiftAmount));
+                    stepList.add(String.format("Arithmetic Right Shift (A >> %d): MSB is 0 (positive). Zeroes fill the vacated top positions.", valB));
                 }
                 stepList.add("Dividing effect: Each arithmetic right shift by 1 position divides the signed value by 2 (floored).");
                 break;
@@ -330,7 +355,7 @@ public final class BitwiseOps {
 
         return new Result(
                 operation, width,
-                a, b, res,
+                a, shiftOperation ? valB : b, res,
                 formatBinary(a, width), formatHex(a, width),
                 (b != null) ? formatBinary(b, width) : null,
                 (b != null) ? formatHex(b, width) : null,
